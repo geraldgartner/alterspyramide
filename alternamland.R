@@ -56,27 +56,37 @@ datadone$alter <- factor(datadone$alter, levels=c("X.Unter.5.Jahre.", "X.5.bis.9
 "X.60.bis.64.Jahre.",     "X.65.bis.69.Jahre.",     "X.70.bis.74.Jahre.",     "X.75.bis.79.Jahre.",    
 "X.80.bis.84.Jahre.",     "X.85.bis.89.Jahre.",     "X.90.bis.94.Jahre.",     "X.95.bis.99.Jahre.", "X.100.Jahre.und.älter."))
 
-p <- ggplot(data = datadone, aes(x = alter, y = pct, fill = gender, frame=ggk)) +
-  geom_bar(data = subset(datadone, gender=="Männer"), alpha = 0.5,
+p <- ggplot(data = datadone, aes(x = alter, y = pct, fill = gender)) +
+  geom_bar(data = subset(datadone, gender=="Männer" & ggk=="1"),
+          stat = "identity",
+         position = "identity") +
+  geom_bar(data = subset(datadone, gender=="Frauen" & ggk=="1"),
            stat = "identity",
+               position = "identity",
+               mapping = aes(y = -pct)) +
+  geom_bar(aes(data = subset(datadone, gender=="Männer"), frame="ggk", alpha = 0.5),
+          stat = "identity",
            position = "identity") +
-  geom_bar(data = subset(datadone, gender=="Frauen"),alpha = 0.5,
+ geom_bar(aes(data = subset(datadone, gender=="Frauen"), frame="ggk", alpha = 0.5),
            stat = "identity",
            position = "identity",
            mapping = aes(y = -pct)) +
-  scale_x_discrete(labels = c("unter 5 Jahre", "bis 9 Jahre", "bis 14 Jahre", 
-                                "bis 19 Jahre",    
-                                "bis 24 Jahre",     "bis 29 Jahre",     "bis 34 Jahre",     "bis 39 Jahre",    
-                                "bis 44 Jahre",     "bis 49 Jahre",     "bis 54 Jahre",     "bis 59 Jahre",    
-                               "bis 64 Jahre",     "bis 69 Jahre",     "bis 74 Jahre",     "bis 79 Jahre",    
-                                "bis 84 Jahre",     "bis 89 Jahre",     "bis 94 Jahre",     "bis 99 Jahre", "+100Jahre")) +
+  scale_x_discrete(labels = c("unter 5 Jahre", "<9 Jahre", "<14 Jahre", 
+                                "<19 Jahre",    
+                                "<24 Jahre",     "<29 Jahre",     "<34 Jahre",     "<39 Jahre",    
+                                "<44 Jahre",     "<49 Jahre",     "<54 Jahre",     "<59 Jahre",    
+                               "<64 Jahre",     "<69 Jahre",     "<74 Jahre",     "<79 Jahre",    
+                                "<84 Jahre",     "<89 Jahre",     "<94 Jahre",     "<99 Jahre", "+100Jahre")) +
   scale_fill_manual(values=c("#749672", "#c15e5a"))+
   scale_y_continuous(labels = scales::percent)+
   coord_flip() +
+  ggtitle("Altersstruktur in:")+
   #facet_grid(. ~ ggk)+
+  guides(fill=guide_legend(title=NULL))+
   theme
 
-gg_animate(p)
+print(p)
+gg_animate(p, "output.gif")
 
 geom_line(data = subset(datadone, gender=="Männer" & ggk=="1"), 
           stat = "identity",
