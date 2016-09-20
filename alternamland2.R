@@ -104,14 +104,20 @@ geom_line(data = subset(datadone, gender=="Männer" & ggk=="1"),
   
   #Neuer Versuch
 np <- ggplot(data = datadone, aes(x = alter, y = pct, fill = gender)) +
-  geom_bar(data = subset(datadone, gender=="Männer"),
-           aes(frame=ggk),
-           stat = "identity") +
-  geom_bar(data = subset(datadone, gender=="Frauen"),
-           aes(frame=ggk),
+  geom_bar(aes(frame=ggk), data = subset(datadone, gender=="Männer"),
+           stat = "identity", 
+           position = "identity") +
+  geom_bar(aes(frame=ggk, y=-pct), data = subset(datadone, gender=="Frauen"),
            stat = "identity",
-           position = "identity",
-           mapping = aes(y = -pct)) +
+           position = "identity") +
+  geom_bar(data = subset(datadone, gender=="Männer" & ggk =="1"),
+           stat = "identity",
+           alpha = 0, 
+           position = "identity") +
+  geom_bar(aes(y=-pct), data = subset(datadone, gender=="Frauen" & ggk =="1"),
+           stat = "identity",
+           alpha = 0, 
+           position = "identity") +
   scale_y_continuous(labels = scales::percent) +
   coord_flip()+
   scale_x_discrete(labels = c("unter 5 Jahre", "<9 Jahre", "<14 Jahre", 
@@ -121,6 +127,13 @@ np <- ggplot(data = datadone, aes(x = alter, y = pct, fill = gender)) +
                               "<64 Jahre",     "<69 Jahre",     "<74 Jahre",     "<79 Jahre",    
                               "<84 Jahre",     "<89 Jahre",     "<94 Jahre",     "<99 Jahre", "+100Jahre")) +
   scale_fill_manual(values=c("#749672", "#c15e5a"))+
+  ggtitle("Alterspyramide in ")+
+  guides(fill=guide_legend(title=NULL))+
+  ylab("Bevölkerungsanteil der Fünf-Jahres-Altersgruppe in Prozent")+
+  xlab("Altersgruppe")+
   theme
 
-gg_animate(np)
+
+
+
+gg_animate(np, ani.width=500, ani.height=500, interval=1)
