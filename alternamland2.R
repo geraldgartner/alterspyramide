@@ -24,7 +24,7 @@ theme <- theme(plot.background = element_rect(fill = "gray97"), panel.grid.major
         axis.title = element_text(vjust = 8), 
         panel.background = element_rect(fill = "grey97", linetype = "solid"), 
         plot.background = element_rect(colour = "gray97"), 
-        plot.title = element_text(hjust=0, margin=unit(c(0,1,0.2,1), "cm")), 
+        plot.title = element_text(hjust=0, margin=unit(c(0,0,0.2,0), "cm")), 
         plot.margin = unit(c(1,0.5,0.5,0.5), "cm")) +
   theme(axis.text=element_text(size=16))
 
@@ -49,7 +49,7 @@ datasums <- aggregate(data$count, by=list(ggk=data$ggk), FUN=sum)
 #datasums <- rename(datasums, ggk = "ggk2")
 
 datadone <- merge(data, datasums, by="ggk")
-datadone$pct <- datadone$count/datadone$x
+datadone$pct <- round((datadone$count/datadone$x)*100,1)
 
 #Anordnen der Daten
 datadone$alter <- factor(datadone$alter, levels=c("X.Unter.5.Jahre.", "X.5.bis.9.Jahre.", "X.10.bis.14.Jahre.", 
@@ -59,50 +59,37 @@ datadone$alter <- factor(datadone$alter, levels=c("X.Unter.5.Jahre.", "X.5.bis.9
 "X.60.bis.64.Jahre.",     "X.65.bis.69.Jahre.",     "X.70.bis.74.Jahre.",     "X.75.bis.79.Jahre.",    
 "X.80.bis.84.Jahre.",     "X.85.bis.89.Jahre.",     "X.90.bis.94.Jahre.",     "X.95.bis.99.Jahre.", "X.100.Jahre.und.älter."))
 
+#Umbenennung der Gemeindegrößenklassen
+datadone$ggk <- gsub("^1$", "weniger als 1.000 Bürger", datadone$ggk)
+datadone$ggk <- gsub("^2$", "1.000-2.000 Bürger", datadone$ggk)
+datadone$ggk <- gsub("^3$", "2.000-5.000 Bürger", datadone$ggk)
+datadone$ggk <- gsub("^4$", "5.000-10.000 Bürger", datadone$ggk)
+datadone$ggk <- gsub("^5$", "10.000-20.000 Bürger", datadone$ggk)
+datadone$ggk <- gsub("^6$", "20.000-50.000 Bürger", datadone$ggk)
+datadone$ggk <- gsub("^7$", "50.000-100.000 Bürger", datadone$ggk)
+datadone$ggk <- gsub("^8$", "100.000-200.000 Bürger", datadone$ggk)
+datadone$ggk <- gsub("^9$", "Stadt Graz", datadone$ggk)
+datadone$ggk <- gsub("^10$", "Stadt Wien", datadone$ggk)
+
+#Umreihung der Gemeindegrößenklassen
+datadone$ggk <- factor(datadone$ggk, levels=c(
+  "weniger als 1.000 Bürger",
+  "1.000-2.000 Bürger",
+  "2.000-5.000 Bürger", 
+  "5.000-10.000 Bürger", 
+  "10.000-20.000 Bürger", 
+  "20.000-50.000 Bürger",
+  "50.000-100.000 Bürger", 
+  "100.000-200.000 Bürger", 
+  "Stadt Graz", 
+  "Stadt Wien"))
+
+#absolute Prozentwerte in den Skalen
+abs_percent <- function(x) {abs(scales::percent(x))}
 
 
-p <- ggplot() +
-  geom_bar(aes(data = subset(datadone, gender=="Männer", x = alter, y = pct, fill = gender, frame=ggk), alpha = 0.5),
-          stat = "identity",
-           position = "identity") +
- geom_bar(aes(data = subset(datadone, gender=="Frauen", x = alter, y = pct, fill = gender, frame=ggk), alpha = 0.5),
-           stat = "identity",
-           position = "identity",
-           mapping = aes(y = -pct)) +
-  scale_x_discrete(labels = c("unter 5 Jahre", "<9 Jahre", "<14 Jahre", 
-                                "<19 Jahre",    
-                                "<24 Jahre",     "<29 Jahre",     "<34 Jahre",     "<39 Jahre",    
-                                "<44 Jahre",     "<49 Jahre",     "<54 Jahre",     "<59 Jahre",    
-                               "<64 Jahre",     "<69 Jahre",     "<74 Jahre",     "<79 Jahre",    
-                                "<84 Jahre",     "<89 Jahre",     "<94 Jahre",     "<99 Jahre", "+100Jahre")) +
-  scale_fill_manual(values=c("#749672", "#c15e5a"))+
-  scale_y_continuous(labels = scales::percent)+
-  coord_flip() +
-  ggtitle("Altersstruktur in:") +
-  guides(fill=guide_legend(title=NULL))+
-  theme
 
-print(p)
-gg_animate(p, "output.gif")
-
-geom_line(data = subset(datadone, gender=="Männer" & ggk=="1"), 
-          stat = "identity",
-          position = "identity") +
-  geom_line(data = subset(datadone, gender=="Frauen" & ggk=="1"),
-            stat = "identity",
-            position = "identity",
-            mapping = aes(y = -pct)) +
-  
-  
-  #geom_bar(data = subset(datadone, gender=="Männer" & ggk=="1"),
-  #       stat = "identity",
-  #     position = "identity") +
-  #geom_bar(data = subset(datadone, gender=="Frauen" & ggk=="1"),
-  #        stat = "identity",
-  #           position = "identity",
-  #          mapping = aes(y = -pct)) +
-  
-  #Neuer Versuch
+  #Plotting
 np <- ggplot(data = datadone, aes(x = alter, y = pct, fill = gender)) +
   geom_bar(aes(frame=ggk), data = subset(datadone, gender=="Männer"),
            stat = "identity", 
@@ -110,15 +97,16 @@ np <- ggplot(data = datadone, aes(x = alter, y = pct, fill = gender)) +
   geom_bar(aes(frame=ggk, y=-pct), data = subset(datadone, gender=="Frauen"),
            stat = "identity",
            position = "identity") +
-  geom_bar(data = subset(datadone, gender=="Männer" & ggk =="1"),
+  geom_bar(data = subset(datadone, gender=="Männer" & ggk =="weniger als 1.000 Bürger"),
+           stat = "identity",
+           alpha = 0,
+           colour = "black",
+           position = "identity") +
+  geom_bar(aes(y=-pct), data = subset(datadone, gender=="Frauen" & ggk =="weniger als 1.000 Bürger"),
            stat = "identity",
            alpha = 0, 
+           colour = "black", 
            position = "identity") +
-  geom_bar(aes(y=-pct), data = subset(datadone, gender=="Frauen" & ggk =="1"),
-           stat = "identity",
-           alpha = 0, 
-           position = "identity") +
-  scale_y_continuous(labels = scales::percent) +
   coord_flip()+
   scale_x_discrete(labels = c("unter 5 Jahre", "<9 Jahre", "<14 Jahre", 
                               "<19 Jahre",    
@@ -127,13 +115,12 @@ np <- ggplot(data = datadone, aes(x = alter, y = pct, fill = gender)) +
                               "<64 Jahre",     "<69 Jahre",     "<74 Jahre",     "<79 Jahre",    
                               "<84 Jahre",     "<89 Jahre",     "<94 Jahre",     "<99 Jahre", "+100Jahre")) +
   scale_fill_manual(values=c("#749672", "#c15e5a"))+
-  ggtitle("Alterspyramide in ")+
+  ggtitle("Alterspyramide nach Einwohner:\n")+
   guides(fill=guide_legend(title=NULL))+
   ylab("Bevölkerungsanteil der Fünf-Jahres-Altersgruppe in Prozent")+
-  xlab("Altersgruppe")+
+  xlab("Altersgruppe") +
+  scale_y_continuous(labels=abs)+
   theme
 
 
-
-
-gg_animate(np, ani.width=500, ani.height=500, interval=1)
+gg_animate(np, ani.width = 496, interval=1.5, "alterspyramide2.gif")
